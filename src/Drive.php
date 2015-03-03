@@ -13,6 +13,7 @@ use Intervention\Image\ImageManager;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Illuminate\Contracts\Config\Repository as Config;
+use Namest\Drive\Contracts\Drive as DriveContract;
 
 /**
  * Class Drive
@@ -21,7 +22,7 @@ use Illuminate\Contracts\Config\Repository as Config;
  * @package Namest\Drive
  *
  */
-class Drive
+class Drive implements DriveContract
 {
     /**
      * @var Request
