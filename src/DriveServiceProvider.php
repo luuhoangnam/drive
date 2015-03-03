@@ -3,6 +3,7 @@
 namespace Namest\Drive;
 
 use Illuminate\Support\ServiceProvider;
+use Namest\Drive\Facades\Drive;
 
 /**
  * Class DriveServiceProvider
@@ -36,6 +37,8 @@ class DriveServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // TODO: Implement register() method.
+        $this->app->singleton('drive', function () {
+            return $this->app->make(Drive::class);
+        });
     }
 }
