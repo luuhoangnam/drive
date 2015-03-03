@@ -3,7 +3,7 @@
 namespace Namest\Drive;
 
 use Illuminate\Support\ServiceProvider;
-use Namest\Drive\Facades\Drive;
+use Namest\Drive\Contracts\Drive as DriveContract;
 
 /**
  * Class DriveServiceProvider
@@ -39,6 +39,10 @@ class DriveServiceProvider extends ServiceProvider
     {
         $this->app->singleton('drive', function () {
             return $this->app->make(Drive::class);
+        });
+
+        $this->app->singleton(DriveContract::class, function () {
+            return $this->app->make('drive');
         });
     }
 }
