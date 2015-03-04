@@ -72,11 +72,12 @@ use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
  * @method UploadedFile flip(mixed $mode = 'h')
  *                                              Mirror the current image horizontally or vertically by specifying the
  *                                              mode.
- * @method UploadedFile fit(integer $width, integer $height = null, \Closure $callback = null, string $position =
- *         'center')                                  Combine cropping and resizing to format image in a smart way. The
- *         method will find the best fitting aspect ratio of your given width and height on the current image
- *         automatically, cut it out and resize it to the given dimension. You may pass an optional Closure callback as
- *         third parameter, to prevent possible upsizing and a custom position of the cutout as fourth parameter.
+ * @method UploadedFile fit(integer $width, integer $height = null, \Closure $callback = null, string $position)
+ *                                   Combine cropping and resizing to format image in a smart way. The method will find
+ *                                   the best fitting aspect ratio of your given width and height on the current image
+ *                                   automatically, cut it out and resize it to the given dimension. You may pass an
+ *                                   optional Closure callback as third parameter, to prevent possible upsizing and a
+ *                                   custom position of the cutout as fourth parameter.
  * @method UploadedFile gamma(float $correction)
  *                                              Performs a gamma correction operation on the current image.
  * @method UploadedFile greyscale()
@@ -144,11 +145,11 @@ use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
  *                                              Resizes current image based on given width and / or height. To
  *                                              contraint the resize command, pass an optional Closure callback as
  *                                              third parameter.
- * @method UploadedFile resizeCanvas(integer $width, integer $height, string $anchor = 'center', boolean $relative =
- *         false, mixed $bgcolor = '#000000')      Resize the boundaries of the current image to given width and
- *         height. An anchor can be defined to determine from what point of the image the resizing is going to happen.
- *         Set the mode to relative to add or subtract the given width or height to the actual image dimensions. You
- *         can also pass a background color for the emerging area of the image.
+ * @method UploadedFile resizeCanvas(integer $width, integer $height, string $anchor = 'center', $relative, $bgcolor)
+ *         Resize the boundaries of the current image to given width and height. An anchor can be defined to determine
+ *         from what point of the image the resizing is going to happen. Set the mode to relative to add or subtract
+ *         the given width or height to the actual image dimensions. You can also pass a background color for the
+ *         emerging area of the image.
  * @method UploadedFile response(string $format = null, integer $quality = 90)
  *                                              Sends HTTP response with current image in given format and quality.
  * @method UploadedFile rotate(float $angle, string $bgcolor = '#000000')
@@ -161,14 +162,10 @@ use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
  *                                              Write a text string to the current image at an optional x, y basepoint
  *                                              position. You can define more details like font-size, font-file and
  *                                              alignment via a callback as the fourth parameter.
- * @method UploadedFile trim(string $base = 'top-left', array $away = [
- * 'top',
- * 'bottom',
- * 'left',
- * 'right'
- * ], integer $tolerance = 0, integer $feather = 0) Trim away image space in given color. Define an optional base to
- * pick a color at a certain position and borders that should be trimmed away. You can also set an optional tolerance
- * level, to trim similar colors and add a feathering border around the trimed image.
+ * @method UploadedFile trim(string $base = 'top-left', array $away, integer $tolerance = 0, integer $feather = 0) Trim
+ *         away image space in given color. Define an optional base to pick a color at a certain position and borders
+ *         that should be trimmed away. You can also set an optional tolerance level, to trim similar colors and add a
+ *         feathering border around the trimed image.
  * @method UploadedFile widen(integer $width, \Closure $callback = null)
  *
  */
