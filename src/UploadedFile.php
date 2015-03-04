@@ -160,6 +160,9 @@ class UploadedFile
         return null;
     }
 
+    /**
+     * @throws \Exception
+     */
     private function processFile()
     {
         $profiles = $this->useProfiles ?: array_keys($this->getDefaultImageProfiles());
@@ -355,4 +358,28 @@ class UploadedFile
 
         return $this;
     }
+
+    /**
+     * @param string $name
+     * @param array  $arguments
+     *
+     * @return $this
+     */
+    public function __call($name, $arguments)
+    {
+        $this->profiles = $this->getProfiles();
+
+        if ($this->profiles && array_key_exists('editing', $this->profiles))
+            $profile = $this->profiles['editing'];
+        else
+            $profile = ['type' => 'image'];
+
+        $profile[$name] = $arguments;
+
+        $this->profiles['editing'] = $profile;
+        $this->useProfiles[]       = 'editing';
+
+        return $this;
+    }
+
 }
