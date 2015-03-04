@@ -1,3 +1,37 @@
+# Getting Started
+
+Provide an _elegant way_ to interact with upload & process uploaded file feature.
+
+**Note**: The package is only support Laravel 5
+
+# Installation
+
+**Step 1**: Install package
+```bash
+composer require namest/drive
+```
+
+**Step 2**: Register service provider in your `config/app.php`
+```php
+return [
+    ...
+    'providers' => [
+        ...
+        'Namest\Drive\DriveServiceProvider',
+    ],
+    ...
+];
+```
+
+**Step 3**: Publish package configs. Open your terminal and type:
+```bash
+php artisan vendor:publish --provider="Namest\Drive\DriveServiceProvider"
+```
+
+**Step 4**: Edit your appropriate configurations in `config/drive.php`:
+
+**Step 6**: Read API below and start _happy_
+
 # API
 
 ## Accept file upload (validate,...)
@@ -12,6 +46,7 @@ return [
     ...
     'rules' => [
         'max:2048', // Kilobytes
+        // Whatever you want
     ],
     ...
 ];
@@ -38,7 +73,7 @@ $small = $file->crop($width, $height, $x, $y)
 $avatar = $file->profile('avatar')->save();
 ```
 
-## Auto edit file with file type
+## Auto edit file by profile for particular upload type
 ```php
 // For example: apply `avatar` profile with every uploaded images.
 // Edit in `drive` config
