@@ -1,7 +1,6 @@
 <?php
 
 use Namest\Drive\Drive;
-use \Mockery;
 
 /**
  * DriveTest Test Case
