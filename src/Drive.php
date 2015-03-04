@@ -11,9 +11,9 @@ use Intervention\Image\Exception\NotReadableException;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager;
 use Symfony\Component\HttpFoundation\File\File;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Illuminate\Contracts\Config\Repository as Config;
 use Namest\Drive\Contracts\Drive as DriveContract;
+use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
 /**
  * Class Drive
@@ -45,10 +45,6 @@ class Drive implements DriveContract
     private $imageManager;
 
     /**
-     * @var array
-     */
-    private $profiles;
-    /**
      * @var Filesystem
      */
     private $filesystem;
@@ -77,206 +73,37 @@ class Drive implements DriveContract
     /**
      * @param string $filename upload file name
      *
-     * @return string
+     * @return UploadedFile
      */
-    public function store($filename)
+    public function accept($filename)
     {
         if ( ! $this->request->hasFile($filename))
             throw new \InvalidArgumentException("Field [{$filename}] does not exists as upload file.");
 
         // Get file request
-        $file = $this->request->file($filename);
+        $uploadedFile = $this->request->file($filename);
 
         // Validation
-        $this->validate($file);
+        $this->validate($uploadedFile);
 
-        // Process file
-        $this->processFile($file);
-
-        // Find appropriate file name (avoid duplicate file name)
-        $filename = $this->getAppropriateFileName($file);
-
-        // Save the file
-        $this->moveUploadedFile($file, $filename);
-
-        // Return relative file path
-        return $filename;
+        // Return
+        return new UploadedFile(
+            $uploadedFile,
+            $this->filesystem,
+            $this->config,
+            $this->imageManager
+        );
     }
 
     /**
-     * @param UploadedFile $fileRequest
+     * @param SymfonyUploadedFile $file
      */
-    private function validate(UploadedFile $fileRequest)
+    private function validate(SymfonyUploadedFile $file)
     {
         $rules      = $this->config->get('drive.rules', []);
-        $validation = $this->validator->make(['file' => $fileRequest], ['file' => $rules]);
+        $validation = $this->validator->make(['file' => $file], ['file' => $rules]);
 
         if ($validation->fails())
             throw new ValidationException($validation);
-    }
-
-    /**
-     * @param UploadedFile $fileRequest
-     */
-    private function processFile(UploadedFile $fileRequest)
-    {
-        $this->processImage($fileRequest);
-    }
-
-    /**
-     * @param UploadedFile $file
-     *
-     * @return Image|null
-     */
-    private function processImage(UploadedFile $file)
-    {
-        try {
-            $image = $this->imageManager->make($file->getRealPath());
-
-            $profiles = $this->getImageProfiles();
-
-            foreach ($profiles as $profile) {
-                foreach ($profile as $method => $parameters) {
-                    $image = call_user_func_array([$image, $method], $parameters);
-                }
-            }
-
-            return $image->save();
-        } catch ( NotReadableException $e ) {
-            return null;
-        }
-    }
-
-    /**
-     * @return array
-     */
-    private function getProfiles()
-    {
-        return $this->profiles ?: $this->config->get('drive.profiles') ?: [];
-    }
-
-    /**
-     * @return array
-     */
-    private function getImageProfiles()
-    {
-        $profiles = [];
-
-        foreach ($this->getProfiles() as $name => $profile) {
-            if ($profile['type'] != 'image')
-                continue;
-
-            unset($profile['type']);
-            $profiles[$name] = $profile;
-        }
-
-        return $profiles;
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return null
-     */
-    private function getProfile($name)
-    {
-        $profiles = $this->getProfiles();
-
-        if (array_key_exists($name, $profiles))
-            return $profiles[$name];
-
-        throw new \InvalidArgumentException("Profile [{$name}] does not exists.");
-    }
-
-    /**
-     * @param UploadedFile $file
-     *
-     * @return string
-     * @throws \Exception
-     */
-    private function getAppropriateFileName(UploadedFile $file)
-    {
-        $location  = $this->config->get('drive.location');
-        $structure = $this->config->get('drive.structure');
-
-        if ( ! strstr($structure, '{name}'))
-            throw new \Exception("File structure [{$structure}] invalid. At least {name} is exists in structure.");
-
-        $now = Carbon::now();
-
-        $originalFileName = $file->getClientOriginalName();
-        $ext              = $file->getClientOriginalExtension();
-        $name             = substr($originalFileName, 0, strlen($originalFileName) - strlen($ext) - 1);
-
-        $suffix = '';
-
-        do {
-            $filename = $structure;
-
-            $replaces = [
-                '{year}'  => $now->year,
-                '{month}' => $now->month,
-                '{name}'  => "{$name}{$suffix}",
-                '{ext}'   => $ext,
-            ];
-
-            foreach ($replaces as $search => $replace) {
-                $filename = str_replace($search, $replace, $filename);
-            }
-
-            $suffix = $suffix ? mt_rand(0, 9) : '-' . mt_rand(0, 9);
-        } while ($this->filesystem->exists("{$location}/{$filename}"));
-
-        return $filename;
-    }
-
-    /**
-     * @return string
-     * @throws \Exception
-     */
-    private function getRootPath()
-    {
-        $default = $this->config->get("filesystems.default");
-
-        $disk = $this->config->get("filesystems.disks.{$default}");
-
-        switch ($disk['driver']) {
-            case 'local':
-                return $disk['root'];
-            case 's3':
-                return $disk['bucket'];
-            case 'rackspace':
-                return $disk['container'];
-            default:
-                throw new \Exception("Not supported disk driver for upload");
-        }
-    }
-
-    /**
-     * @param string $filename
-     *
-     * @return array
-     */
-    private function extractPath($filename)
-    {
-        $segments = explode('/', $filename);
-        $filename = array_pop($segments);
-
-        return [implode('/', $segments), $filename];
-    }
-
-    /**
-     * @param UploadedFile $file
-     * @param string       $filename
-     *
-     * @return File
-     */
-    private function moveUploadedFile(UploadedFile $file, $filename)
-    {
-        $root     = $this->getRootPath();
-        $location = $this->config->get('drive.location');
-        list($directory, $name) = $this->extractPath($filename);
-
-        return $file->move("{$root}/{$location}/{$directory}", $name);
     }
 }

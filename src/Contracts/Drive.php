@@ -16,5 +16,5 @@ interface Drive
      *
      * @return string
      */
-    public function store($filename);
+    public function accept($filename);
 }
