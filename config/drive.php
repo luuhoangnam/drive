@@ -10,16 +10,16 @@ return [
     ],
     // Default processing profiles
     'default_profiles' => [
-        'image' => ['avatar'],
+        'image' => ['avatar'], // profiles
         'video' => [],
     ],
-    //
+    // Profile name cannot be 'editing' because it's reserved word
     'profiles'         => [
         'avatar' => [
             'type'     => 'image',
             // Steps
             'crop'     => [100, 100, 25, 25], // width, height, x, y
-            'heighten' => [200], // height
+            'blur' => [200], // height
         ],
     ],
 ];
