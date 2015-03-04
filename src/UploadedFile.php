@@ -22,6 +22,11 @@ use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 class UploadedFile
 {
     /**
+     * @var array
+     */
+    protected $useProfiles = [];
+
+    /**
      * @var SymfonyUploadedFile
      */
     private $file;
@@ -49,12 +54,22 @@ class UploadedFile
     /**
      * @var File
      */
-    private $temporaryFile;
+    private $temporaryOriginalFile;
 
     /**
      * @var string
      */
-    private $temporaryName;
+    private $temporaryOriginalName;
+
+    /**
+     * @var File
+     */
+    private $temporaryEditedFile;
+
+    /**
+     * @var string
+     */
+    private $temporaryEditedName;
 
     /**
      * @param SymfonyUploadedFile $file
@@ -74,7 +89,7 @@ class UploadedFile
         $this->imageManager = $imageManager;
 
         // Move file to my own temporary directory
-        $this->temporaryFileName = $this->makeTemporaryFile()->getRealPath();
+        $this->temporaryOriginalFile = $this->makeTemporaryFile();
     }
 
     /**
@@ -84,77 +99,108 @@ class UploadedFile
      */
     public function __destruct()
     {
-        $this->deleteTemporaryFile();
+        $this->deleteTemporaryFiles();
     }
 
     /**
+     * @param bool $original
+     *
      * @return File
      * @throws \Exception
      */
-    private function makeTemporaryFile()
+    private function makeTemporaryFile($original = true)
     {
         $root = $this->getRootPath();
         $temp = $this->config->get('drive.temporary');
-        $this->filesystem->makeDirectory($temp);
-        $this->temporaryName = $name = Str::random();
+        $name = Str::random();
 
-        return $this->temporaryFile = $this->file->move("{$root}/{$temp}", $name);
+        $this->filesystem->makeDirectory($temp);
+
+        if ($original) {
+            $this->temporaryOriginalName = $name;
+
+            return $this->file->move("{$root}/{$temp}", $name);
+        }
+
+        if ( ! $this->filesystem->copy("{$temp}/{$this->temporaryOriginalName}", "{$temp}/{$name}"))
+            throw new \Exception("Can not copy file [{$temp}/{$this->temporaryOriginalName}] for editing.");
+
+        $this->temporaryEditedName = $name;
+
+        return new File("{$root}/{$temp}/{$this->temporaryOriginalName}");
     }
 
     /**
      * @throws \Exception
      */
-    private function deleteTemporaryFile()
+    private function deleteTemporaryFiles()
     {
-        $temp = $this->config->get('drive.temporary');
-        $this->filesystem->delete("{$temp}/{$this->temporaryName}");
+        $directory = $this->config->get('drive.temporary');
+
+        $this->filesystem->deleteDirectory($directory);
     }
 
     /**
      * @param string $suffix
      *
-     * @return string
+     * @return string|null
      */
     public function save($suffix = null)
     {
         // Process file
-        $this->processFile($this->file);
+        $this->processFile();
 
         // Find appropriate file name (avoid duplicate file name)
         $filename = $this->getAppropriateFileName($this->file, $suffix);
 
         // Save the file
-        $this->moveUploadedFile($filename);
+        if ($this->moveUploadedFile($filename))
+            return $filename;
 
-        // Return relative file path
-        return $filename;
+        return null;
     }
 
-    /**
-     * @param SymfonyUploadedFile $fileRequest
-     */
-    private function processFile(SymfonyUploadedFile $fileRequest)
+    private function processFile()
     {
-        $this->processImage($fileRequest);
+        $profiles = $this->useProfiles ?: array_keys($this->getDefaultImageProfiles());
+
+        if ( ! $profiles)
+            return;
+
+        $this->temporaryEditedFile = $this->makeTemporaryFile(false);
+
+        foreach ($profiles as $name) {
+            $profile = $this->getProfile($name);
+
+            if ($profile['type'] == 'image')
+                $this->processImage($profile);
+        }
+
+        $this->useProfiles         = [];
+        $this->temporaryEditedFile = null;
     }
 
     /**
-     * @return Image|null
+     * @param array $profile
+     *
+     * @return Image
      */
-    private function processImage()
+    private function processImage(array $profile)
     {
         try {
-            $image = $this->imageManager->make($this->temporaryFile->getRealPath());
+            $image = $this->imageManager->make($this->temporaryEditedFile->getRealPath());
 
-            $profiles = $this->getDefaultImageProfiles();
+            foreach ($profile as $method => $parameters) {
+                if ($method === 'type')
+                    continue;
 
-            foreach ($profiles as $profile) {
-                foreach ($profile as $method => $parameters) {
-                    $image = call_user_func_array([$image, $method], $parameters);
-                }
+                $image = call_user_func_array([$image, $method], $parameters);
             }
 
-            return $image->save();
+            $root = $this->getRootPath();
+            $temp = $this->config->get('drive.temporary');
+
+            return $image->save("{$root}/{$temp}/{$this->temporaryEditedName}");
         } catch ( NotReadableException $e ) {
             return null;
         }
@@ -269,13 +315,13 @@ class UploadedFile
     }
 
     /**
-     * @param string $filename
+     * @param string $path
      *
      * @return array
      */
-    private function extractPath($filename)
+    private function extractPath($path)
     {
-        $segments = explode('/', $filename);
+        $segments = explode('/', $path);
         $filename = array_pop($segments);
 
         return [implode('/', $segments), $filename];
@@ -284,7 +330,7 @@ class UploadedFile
     /**
      * @param string $filename
      *
-     * @return File
+     * @return bool
      * @throws \Exception
      */
     private function moveUploadedFile($filename)
@@ -295,6 +341,18 @@ class UploadedFile
 
         $this->filesystem->makeDirectory("{$location}/{$directory}");
 
-        return $this->filesystem->copy("{$temp}/{$this->temporaryName}", "{$location}/{$directory}/{$name}");
+        return $this->filesystem->copy("{$temp}/{$this->temporaryEditedName}", "{$location}/{$directory}/{$name}");
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return $this
+     */
+    public function profile($name)
+    {
+        $this->useProfiles[] = $name;
+
+        return $this;
     }
 }
