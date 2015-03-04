@@ -130,9 +130,6 @@ class UploadedFile
         $this->filesystem   = $filesystem;
         $this->config       = $config;
         $this->imageManager = $imageManager;
-
-        // Move file to my own temporary directory
-        $this->temporaryOriginalFile = $this->makeTemporaryFile();
     }
 
     /**
@@ -190,6 +187,9 @@ class UploadedFile
      */
     public function save($suffix = null)
     {
+        // Move file to my own temporary directory
+        $this->temporaryOriginalFile = $this->makeTemporaryFile();
+
         // Process file
         $this->processFile();
 
