@@ -2,6 +2,7 @@
 
 namespace Namest\Drive;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 use Namest\Drive\Contracts\Drive as DriveContract;
 

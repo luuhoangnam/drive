@@ -78,6 +78,16 @@ class UploadedFile
     }
 
     /**
+     * Clean up
+     *
+     * @throws \Exception
+     */
+    public function __destruct()
+    {
+        $this->deleteTemporaryFile();
+    }
+
+    /**
      * @return File
      * @throws \Exception
      */
@@ -89,6 +99,15 @@ class UploadedFile
         $this->temporaryName = $name = Str::random();
 
         return $this->temporaryFile = $this->file->move("{$root}/{$temp}", $name);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function deleteTemporaryFile()
+    {
+        $temp = $this->config->get('drive.temporary');
+        $this->filesystem->delete("{$temp}/{$this->temporaryName}");
     }
 
     /**
