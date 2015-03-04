@@ -1,13 +1,12 @@
 language: php
-
 php:
-  - 5.4
-  - 5.5
-  - 5.6
-  - hhvm
-
+- 5.4
+- 5.5
+- 5.6
+- hhvm
 sudo: false
-
 install: travis_retry composer install --no-interaction --prefer-source
-
 script: vendor/bin/phpunit
+notifications:
+  slack:
+    secure: ahbIlYaE8e7u5J8w5XD57Tzm/xMYvvYtNbBB9/SNi+zA9IzrI20eCy2YVAWQ7n4b5XRY3tle1Rea0mGpJclhZvr/i5rcJ/yfvnmVbwqsJ42ul+6jNBN+HdyvxWE9TuwxQzbfVuJ2z4TYo8zx/ej8xYFc4XB/+3oiXqS8Gn7/k04=
