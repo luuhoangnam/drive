@@ -276,6 +276,6 @@ class UploadedFile
 
         $this->filesystem->makeDirectory("{$location}/{$directory}");
 
-        return $this->filesystem->move("{$temp}/{$this->temporaryName}", "{$location}/{$directory}/{$name}");
+        return $this->filesystem->copy("{$temp}/{$this->temporaryName}", "{$location}/{$directory}/{$name}");
     }
 }
