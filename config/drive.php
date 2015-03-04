@@ -22,7 +22,7 @@ return [
             'type' => 'image',
             // Steps
             'crop' => [100, 100, 25, 25], // width, height, x, y
-            'blur' => [200], // percent
+            'blur' => [20], // percent
         ],
     ],
 ];
