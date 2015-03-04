@@ -47,7 +47,7 @@ class DriveTest extends PHPUnit_Framework_TestCase
         /** @var \Illuminate\Contracts\Config\Repository $config */
         $config = Mockery::mock('\Illuminate\Contracts\Config\Repository');
         $config->shouldReceive('get')->once()->with('drive.rules', [])->andReturn(['max:2048']);
-        $config->shouldReceive('get')->once()->with('drive.temporary')->andReturn('temp');
+        $config->shouldReceive('get')->once()->with('drive.location.temporary')->andReturn('temp');
 
         return $config;
     }
