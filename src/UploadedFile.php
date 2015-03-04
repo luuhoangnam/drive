@@ -78,35 +78,17 @@ class UploadedFile
     }
 
     /**
-     * Clean up
-     *
-     * @throws \Exception
-     */
-    public function __destruct()
-    {
-        $this->deleteTemporaryFile();
-    }
-
-    /**
      * @return File
      * @throws \Exception
      */
     private function makeTemporaryFile()
     {
         $root = $this->getRootPath();
-        $temp = $this->config->get('drive.temp');
+        $temp = $this->config->get('drive.temporary');
         $this->filesystem->makeDirectory($temp);
         $this->temporaryName = $name = Str::random();
 
         return $this->temporaryFile = $this->file->move("{$root}/{$temp}", $name);
-    }
-
-    /**
-     * @throws \Exception
-     */
-    private function deleteTemporaryFile()
-    {
-        @unlink($this->temporaryFileName);
     }
 
     /**
@@ -288,7 +270,7 @@ class UploadedFile
      */
     private function moveUploadedFile($filename)
     {
-        $temp     = $this->config->get('drive.temp');
+        $temp     = $this->config->get('drive.temporary');
         $location = $this->config->get('drive.location');
         list($directory, $name) = $this->extractPath($filename);
 

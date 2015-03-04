@@ -2,7 +2,7 @@
 
 return [
     'location'         => 'files', // Absolutely to filesystem.disks.local.root config
-    'temp'             => 'temp', // Same as above but its temporary directory
+    'temporary'        => 'temp', // Same as above but its temporary directory
     'structure'        => '{year}/{month}/{name}.{ext}', // Variables: year, month, name, ext
     // Validation rules
     'rules'            => [
